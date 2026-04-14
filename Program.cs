@@ -1,111 +1,113 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClothingApp
+namespace TransportSystem
 {
-    public class Odyah
+
+    public class TransportTicket
     {
-        public string Model { get; set; }
-        public string Size { get; set; }
+        private readonly string _code; 
+        private string _name;
+        private decimal _price;
 
-        public Odyah(string model, string size)
+        private static int _totalTicketsCount = 0;
+
+        public TransportTicket(string code, string name, decimal price)
         {
-            Model = model;
-            Size = size;
+            _code = code;
+            _name = name;
+            _price = price;
+            _totalTicketsCount++;
         }
 
-        public virtual void Odiahatys()
+        public decimal Price => _price;
+        public static int TotalTicketsCount => _totalTicketsCount;
+
+        public virtual string GetInfo()
         {
-            Console.WriteLine($"[Метод Одяг]: Ви одягаєте базовий елемент гардеробу.");
+            return $"Код: {_code} | Назва: {_name} | Ціна: {_price} грн";
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is Odyah other)
-                return Model == other.Model && Size == other.Size;
-            return false;
-        }
+        public bool IsExpensive() => _price > 500;
 
-        public override int GetHashCode() => (Model, Size).GetHashCode();
-
-        public override string ToString() => $"Тип: {this.GetType().Name}, Модель: {Model}, Розмір: {Size}";
+        public override string ToString() => GetInfo();
     }
 
-    public class Kurtka : Odyah
+    public class SingleRide : TransportTicket
     {
-        public Kurtka(string model, string size) : base(model, size) { }
-        
-        public override void Odiahatys()
-        {
-            Console.WriteLine($"[Метод Куртка]: Ви застібаєте блискавку на куртці '{Model}'.");
-        }
-    }
+        private string _transportType;
 
-    public class Sorochka : Odyah
-    {
-        public Sorochka(string model, string size) : base(model, size) { }
-        
-        public override void Odiahatys()
+        public SingleRide(string code, string name, decimal price, string transportType) 
+            : base(code, name, price)
         {
-            Console.WriteLine($"[Метод Сорочка]: Ви застібаєте гудзики на сорочці '{Model}'.");
+            _transportType = transportType;
         }
-    }
 
-    public class Shtany : Odyah
-    {
-        public Shtany(string model, string size) : base(model, size) { }
-        
-        public override void Odiahatys()
+        public override string GetInfo()
         {
-            Console.WriteLine($"[Метод Штани]: Ви вдягаєте штани '{Model}' та затягуєте ремінь.");
+            return base.GetInfo() + $" | Транспорт: {_transportType}";
         }
     }
 
-    public class Vzuttya : Odyah
+    public class MonthlyPass : TransportTicket
     {
-        public Vzuttya(string model, string size) : base(model, size) { }
-        
-        public override void Odiahatys()
+        private int _validDays;
+
+        public MonthlyPass(string code, string name, decimal price, int validDays) 
+            : base(code, name, price)
         {
-            Console.WriteLine($"[Метод Взуття]: Ви взуваєте '{Model}' та зав'язуєте шнурки.");
+            _validDays = validDays;
+        }
+
+        public override string GetInfo()
+        {
+            return base.GetInfo() + $" | Термін дії: {_validDays} днів";
         }
     }
 
-    public class WardrobeManager
-    {
-        private List<Odyah> _items = new List<Odyah>();
 
-        public void AddItem(Odyah item)
+    public class TicketManager
+    {
+        private List<TransportTicket> _tickets = new List<TransportTicket>();
+
+        public void AddTicket(TransportTicket ticket)
         {
-            Console.WriteLine($"[Метод WardrobeManager]: Додано {item.GetType().Name} до списку.");
-            _items.Add(item);
+            _tickets.Add(ticket);
+            Console.WriteLine($"[Менеджер]: Додано квиток {ticket.GetType().Name}.");
         }
 
-        public void VybratyOdyah()
+        public void PrintFullReport()
         {
-            Console.WriteLine("\n--- Вибір одягу зі списку ---");
-            foreach (var item in _items)
+            Console.WriteLine("\n--- ЗВІТ ПО КВИТКАХ ---");
+            decimal totalSum = 0;
+            int expensiveCount = 0;
+
+            foreach (var ticket in _tickets)
             {
-                Console.WriteLine(item.ToString());
-                item.Odiahatys(); 
+                Console.WriteLine(ticket.GetInfo());
+                totalSum += ticket.Price;
+                if (ticket.IsExpensive()) expensiveCount++;
             }
+
+            Console.WriteLine("-----------------------");
+            Console.WriteLine($"Загальна сума: {totalSum} грн");
+            Console.WriteLine($"Кількість дорогих (>500): {expensiveCount}");
+            Console.WriteLine($"Всього створено в системі (static): {TransportTicket.TotalTicketsCount}");
         }
     }
+
 
     class Program
     {
         static void Main(string[] args)
         {
-            WardrobeManager manager = new WardrobeManager();
+            TicketManager manager = new TicketManager();
 
-            manager.AddItem(new Kurtka("Якась куртка", "L"));
-            
-            manager.AddItem(new Sorochka("Якась сорочка", "L"));
-
-            manager.AddItem(new Vzuttya("Якесь взуття", "43"));
-            
-            manager.AddItem(new Shtany("Якісь штани", "M"));
-            manager.VybratyOdyah();
+            manager.AddTicket(new SingleRide("QR-01", "Метро-разовий", 15.00m, "Метро"));
+            manager.AddTicket(new MonthlyPass("MP-30", "Місячний абонемент", 800.00m, 30));
+            manager.AddTicket(new MonthlyPass("MP-15", "Півмісячний", 450.00m, 15));
+            manager.AddTicket(new SingleRide("TR-05", "Квиток на трамвай", 12.00m, "Трамвай"));
+            manager.PrintFullReport();
         }
     }
 }
